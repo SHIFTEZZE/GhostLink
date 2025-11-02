@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
+from flask_cors import CORS  # <-- add this
 
 app = Flask(__name__)
+CORS(app)  # <-- enable CORS
+
 messages = []
 
-# Send message endpoint
 @app.route("/send", methods=["POST"])
 def send_message():
     data = request.json
@@ -17,17 +19,13 @@ def send_message():
     })
     return jsonify({"status": "sent"}), 200
 
-# Receive messages endpoint
 @app.route("/receive", methods=["GET"])
 def receive_messages():
-    # Return last 20 messages
     return jsonify(messages[-20:])
 
-# Simple homepage to pass health checks
 @app.route("/")
 def home():
     return "<h2>GhostLink Server Active ⚡</h2>"
 
-# Start the server on Koyeb-friendly host and port
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
