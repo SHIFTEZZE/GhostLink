@@ -1,40 +1,29 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
-import os
-import json
+from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
 
-MESSAGES_FILE = "messages.json"
+# Simple in-memory store
+messages = []
 
-# Load old messages
-if not os.path.exists(MESSAGES_FILE):
-    with open(MESSAGES_FILE, "w") as f:
-        json.dump([], f)
-
-@app.route("/")
-def home():
-    return "GhostLink Server Running"
-
-@app.route("/send", methods=["POST"])
-def send():
-    data = request.get_json(force=True)
-    sender = data.get("sender", "Unknown")
-    message = data.get("message", "")
+@app.route('/send', methods=['POST'])
+def send_message():
+    data = request.get_json()
+    sender = data.get('sender', 'Unknown')  # default if missing
+    text = data.get('text', '')
+    timestamp = datetime.now().strftime("%H:%M:%S")
     
-    with open(MESSAGES_FILE, "r") as f:
-        messages = json.load(f)
-    messages.append({"sender": sender, "message": message})
-    with open(MESSAGES_FILE, "w") as f:
-        json.dump(messages, f)
-    return jsonify({"status": "OK"})
+    msg = {
+        'sender': sender,
+        'text': text,
+        'time': timestamp
+    }
+    messages.append(msg)
+    return jsonify({'status': 'ok'}), 200
 
-@app.route("/messages", methods=["GET"])
-def messages():
-    with open(MESSAGES_FILE, "r") as f:
-        messages = json.load(f)
-    return jsonify(messages)
+@app.route('/receive', methods=['GET'])
+def receive_messages():
+    return jsonify(messages), 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
